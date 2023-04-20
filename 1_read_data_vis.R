@@ -3,13 +3,14 @@ library(tidyverse)
 library(rgdal)
 library(maptools)
 library(dplyr)
+library(ggeffects)
 
 #read data
 setwd("C:/Users/emanu/Dropbox (Personal)/Doutorado - Emanuelle/Cap 2 - Inclusion criteria/data")
 
 #setwd("taxonomic-bias")
 
-webs <- read.csv("Scientiometric_Data_March_2023.csv",  sep=";")
+webs <- read.csv("Scientiometric_Data_April_2023.csv",  sep=";", dec = ",")
 summary(webs)
 
 ## ***********************************************
@@ -58,7 +59,7 @@ years_groups <- webs %>%
 ggplot(years_groups, aes(x = year_group, y = count)) +
   geom_bar(stat = "identity") +
   labs(x = "Years group",
-       y = "Published networks number") +
+       y = "Published networks") +
   geom_col(fill = "#0099f9") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, vjust = 0.7)) +
@@ -79,7 +80,8 @@ taxa_groups_A <- webs %>%
   drop_na(Animal_Taxonomic_level) %>% 
   group_by(Animal_Taxonomic_level) %>% 
   summarize(count = length(Animal_Taxonomic_level))
- 
+
+#improving plot
 taxa_groups_A %>%
   arrange(count) %>%
   mutate(Animal_Taxonomic_level = factor(Animal_Taxonomic_level, 
@@ -89,7 +91,7 @@ taxa_groups_A %>%
   ggplot(aes(x = Animal_Taxonomic_level, y = count)) +
   geom_bar(stat = "identity") +
   labs(x = "Animal Taxon",
-       y = "Published networks number") +
+       y = "Published networks") +
   geom_col(fill = "#0099f9") +
   theme_minimal()
 
@@ -118,6 +120,105 @@ taxa_groups_P %>%
        y = "Published networks number") +
   geom_col(fill = "#0099f9") +
   theme_minimal()
+
+
+### networks number x animal taxa groups (ANIMALS)
+webs %>% 
+  drop_na(Animal_taxon) %>%
+  group_by(Animal_taxon) %>% 
+  summarize(count = length(Animal_taxon)) %>%
+  ggplot(aes(x = Animal_taxon, y = count)) +
+  geom_bar(stat = "identity") 
+
+animal_groups <- webs %>%
+  drop_na(Animal_taxon) %>% 
+  group_by(Animal_Taxonomic_level, Animal_taxon) %>% 
+  summarize(count = length(Animal_taxon))
+
+filtered_data <- animal_groups %>% filter(count > 3)
+
+# stacked barplot with multiple groups
+filtered_data %>%
+  arrange(count) %>%
+  mutate(Animal_Taxonomic_level = factor(Animal_Taxonomic_level, 
+                                         levels=c("NER", "phylum", "class", "order", "subfamily", 
+                                                  "superfamily", "family", "tribe", "genus"))) %>%
+  ggplot(aes(x = count, y = Animal_Taxonomic_level, fill = Animal_taxon)) +
+  geom_bar(stat = "identity") +
+  labs(x = "Published networks",
+       y = "Animal Taxonomic Level") +
+  theme_minimal()
+
+#simple barplot only with animal taxa
+ggplot(data = filtered_data, aes(x = count, y = reorder(Animal_taxon, -count))) +
+  geom_bar(stat = "identity") +
+  xlab("Published networks") +
+  ylab("Animal Taxonomic Group") +
+  theme_minimal()
+
+
+### networks number x plant taxa groups (PLANTS)
+webs %>% 
+  drop_na(Plant_taxon) %>%
+  group_by(Plant_taxon) %>% 
+  summarize(count = length(Plant_taxon)) %>%
+  ggplot(aes(x = Plant_taxon, y = count)) +
+  geom_bar(stat = "identity") 
+
+plant_groups <- webs %>%
+  drop_na(Plant_taxon) %>% 
+  group_by(Plant_Taxonomic_level, Plant_taxon) %>% 
+  summarize(count = length(Plant_taxon))
+
+filtered_data2 <- plant_groups %>% filter(count > 2)
+
+###plants has a very reduced number of taxonomic groups###
+
+####### anual study count fo the most published animal taxa
+#grouping the 3 most published animal taxa
+animal_year <- webs %>%
+  drop_na(Animal_taxon) %>% 
+  mutate(Animal_taxon_group = case_when(
+    Animal_taxon %in% c("Insecta", "Apoidea", "Trochilidae") ~ Animal_taxon,
+    TRUE ~ "Other")) %>%
+  group_by(Publi_Year, Animal_taxon_group) %>% 
+  summarize(count = n())
+
+#### test 
+#testing the assumptions
+ay_glm <- glm(count ~ Publi_Year + Animal_taxon_group, data = animal_year, family = poisson)
+plot(ay_glm)
+summary(ay_glm)
+
+library(car)
+vif(ay_glm)
+
+library(broom)
+my_data_augmented <- augment(ay_glm)
+ggplot(my_data_augmented, aes(x = .fitted, y = .resid)) +
+  geom_point() +
+  xlab("Predicted Values") +
+  ylab("Residuals") +
+  ggtitle("GLM Residuals vs. Predicted Values")
+
+#plotting
+ggplot(animal_year, aes(x = Publi_Year, y = count, col = Animal_taxon_group)) +
+  geom_point() +
+  stat_smooth(method = "glm", formula = count ~ Publi_Year * Animal_taxon_group, se = FALSE) +
+  facet_wrap(~ Animal_taxon_group)
+
+ggplot(animal_year, aes(x = Publi_Year, y = count, col = Animal_taxon_group)) +
+  geom_point() +
+  geom_smooth(method = "glm", formula = count ~ Publi_Year + Animal_taxon_group, se = F)
+
+
+# Predict marginal effects for plotting
+pred <- ggpredict(ay_glm, terms = c("Publi_Year", "Animal_taxon_group"), type = "fe")
+ggplot(pred, aes(x = x, y = predicted, color = factor(group))) +
+  geom_point() +
+  geom_smooth() +
+  facet_wrap(~ group)
+
 
 
 
