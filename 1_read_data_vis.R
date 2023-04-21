@@ -4,6 +4,7 @@ library(rgdal)
 library(maptools)
 library(dplyr)
 library(ggeffects)
+library(nlme)
 
 #read data
 setwd("C:/Users/emanu/Dropbox (Personal)/Doutorado - Emanuelle/Cap 2 - Inclusion criteria/data")
@@ -186,7 +187,7 @@ animal_year <- webs %>%
 
 #### test 
 #testing the assumptions
-ay_glm <- glm(count ~ Publi_Year + Animal_taxon_group, data = animal_year, family = poisson)
+ay_glm <- glm(count ~ Animal_taxon_group * Publi_Year, data = animal_year, family = poisson)
 plot(ay_glm)
 summary(ay_glm)
 
@@ -204,7 +205,7 @@ ggplot(my_data_augmented, aes(x = .fitted, y = .resid)) +
 #plotting
 ggplot(animal_year, aes(x = Publi_Year, y = count, col = Animal_taxon_group)) +
   geom_point() +
-  stat_smooth(method = "glm", formula = count ~ Publi_Year * Animal_taxon_group, se = FALSE) +
+  stat_smooth(method = "glm", formula = count ~ Animal_taxon_group * Publi_Year, se = FALSE) +
   facet_wrap(~ Animal_taxon_group)
 
 ggplot(animal_year, aes(x = Publi_Year, y = count, col = Animal_taxon_group)) +
@@ -218,6 +219,50 @@ ggplot(pred, aes(x = x, y = predicted, color = factor(group))) +
   geom_point() +
   geom_smooth() +
   facet_wrap(~ group)
+
+predlm <- predict(ay_glm, newdata = animal_year)
+animal_year$predlm <- predlm
+
+ggplot(animal_year, aes(x = Publi_Year, y = count, col = Animal_taxon_group)) +
+  geom_point() +
+  geom_line(aes(y = predlm), size = 1)
+
+# Plotting the real graph for each group
+# Create a new column in animal_year to match the animal taxon group with the predicted data
+animal_year$group <- factor(animal_year$Animal_taxon_group, levels = levels(pred$group))
+
+# Original plot with points and facets
+plot1 <- ggplot(animal_year, aes(x = Publi_Year, y = count, col = Animal_taxon_group)) +
+  geom_point() +
+  facet_wrap(~ Animal_taxon_group)
+
+# Second plot with predicted values and facets
+plot2 <- ggplot(pred, aes(x = x, y = predicted, color = factor(group))) +
+  geom_line() +
+  facet_wrap(~ group)
+
+# Combine the two plots using the + operator
+combined_plot <- plot1 +
+  geom_line(aes(x = x, y = predicted, color = factor(group)), data = pred, size = 1) +
+  theme_minimal()+
+  theme(legend.position = "none") +  # Remove legend from the first plot
+  labs(x = "Year",
+       y = "Published networks") +
+  facet_wrap(~ group, scales = "free_y")  # Create a separate facet for each group
+
+# Display the combined plot
+combined_plot
+
+
+
+
+
+
+
+
+
+
+
 
 
 
