@@ -7,11 +7,11 @@ library(ggeffects)
 library(nlme)
 
 #read data
-setwd("C:/Users/emanu/Dropbox (Personal)/Doutorado - Emanuelle/Cap 2 - Inclusion criteria/data")
+setwd("C:/Users/emanu/Dropbox (Personal)/Doutorado - Emanuelle/Cap 2 - Taxonomic bias/data")
 
 #setwd("taxonomic-bias")
 
-webs <- read.csv("Scientiometric_Data_April_2023.csv",  sep=";", dec = ",")
+webs <- read.csv("Scientiometric_Data_May_2023.csv",  sep=";", dec = ",")
 summary(webs)
 
 ## ***********************************************
@@ -27,6 +27,7 @@ webs <- webs[!is.na(webs$Country),]
 sum(webs$LAT == "")
 webs$LAT[webs$LAT == ""] <- NA
 webs <- webs[!is.na(webs$LAT),]
+
 
 #data by realms
 realm.data <- webs %>%
@@ -64,9 +65,9 @@ ggplot(years_groups, aes(x = year_group, y = count)) +
   geom_col(fill = "#0099f9") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, vjust = 0.7)) +
-  scale_x_discrete(labels=c("1920:1930", "1960:1970", "1970:1975", "1975:1980", "1980:1985",
-                            "1985:1990", "1990:1995", "1995:2000", "2000:2005", "2005:2010", 
-                            "2010:2015", "2015:2020", "2021")) +
+  scale_x_discrete(labels=c("1920-1930", "1960-1969", "1970-1975", "1976-1980", "1981-1985",
+                            "1986-1990", "1991-1995", "1996-2000", "2001-2005", "2006-2010", 
+                            "2011-2015", "2016-2020", "2021")) +
   geom_hline(yintercept = mean(years_groups$count), linetype = "dashed", size = 1)
 
 ### networks number x taxonomic restriction (ANIMALS)
@@ -86,8 +87,8 @@ taxa_groups_A <- webs %>%
 taxa_groups_A %>%
   arrange(count) %>%
   mutate(Animal_Taxonomic_level = factor(Animal_Taxonomic_level, 
-                                         levels=c("phylum", "class", "order", "subfamily", 
-                                                  "family", "superfamily", "tribe", "genus", 
+                                         levels=c("phylum", "class", "order", "superfamily", 
+                                                  "family", "subfamily", "tribe", "genus", 
                                                   "NER"))) %>% 
   ggplot(aes(x = Animal_Taxonomic_level, y = count)) +
   geom_bar(stat = "identity") +
@@ -196,7 +197,7 @@ vif(ay_glm)
 
 library(broom)
 my_data_augmented <- augment(ay_glm)
-ggplot(my_data_augmented, aes(x = .fitted, y = .resid)) +
+ggplot(my_data_augmented, aes(x = .fitted, y = .resid)) + 
   geom_point() +
   xlab("Predicted Values") +
   ylab("Residuals") +
