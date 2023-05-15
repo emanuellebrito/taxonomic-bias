@@ -12,6 +12,7 @@ setwd("C:/Users/emanu/Dropbox (Personal)/Doutorado - Emanuelle/Cap 2 - Taxonomic
 #setwd("taxonomic-bias")
 
 webs <- read.csv("Scientiometric_Data_May_2023.csv",  sep=";", dec = ",")
+reuse <- read.csv("ReusedData_May_2023.csv",  sep=";", dec = ",")
 summary(webs)
 
 ## ***********************************************
@@ -43,7 +44,7 @@ country.data <- webs %>%
 ##########################
 # GRAPHS FOR DATA VISUALISATION
 ##########################
-### networks count x year
+### networks count x year ORIGINAL
 attach(webs)
 webs %>% group_by(Publi_Year) %>% 
   summarize(count = length(Publi_Year)) %>%
@@ -58,17 +59,50 @@ years_groups <- webs %>%
   summarize(count = n())
 
 #improving plot
+tiff('figure2a.tif', w=1600, h=900, units="px", res=300, compression = "lzw")
 ggplot(years_groups, aes(x = year_group, y = count)) +
   geom_bar(stat = "identity") +
   labs(x = "Years group",
        y = "Published networks") +
-  geom_col(fill = "#0099f9") +
+  geom_col(fill = "black") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, vjust = 0.7)) +
   scale_x_discrete(labels=c("1920-1930", "1960-1969", "1970-1975", "1976-1980", "1981-1985",
                             "1986-1990", "1991-1995", "1996-2000", "2001-2005", "2006-2010", 
                             "2011-2015", "2016-2020", "2021")) +
   geom_hline(yintercept = mean(years_groups$count), linetype = "dashed", size = 1)
+dev.off()
+### networks count x year REUSED
+reuse_summary <- reuse %>% 
+  group_by(Reference_Year) %>% 
+  summarize(count = length(Reference_Year))
+
+reuse_summary %>%
+  ggplot(aes(x = Reference_Year, y = count)) +
+  geom_bar(stat = "identity", fill = "#0099f9") +
+  labs(x = "Year", y = "Reused networks")+
+  theme_minimal() +
+  geom_hline(yintercept = mean(reuse_summary$count), linetype = "dashed", size = 1)
+
+#organizing sequences by years group
+years_groups_r <- reuse %>%
+  mutate(year_group = cut(Reference_Year, 
+                          breaks = c(seq(2000, 2021, by = 5), Inf))) %>%
+  group_by(year_group) %>%
+  summarize(count = n())
+
+tiff('figure2b.tif', w=1600, h=900, units="px", res=300, compression = "lzw")
+ggplot(years_groups_r, aes(x = year_group, y = count)) +
+  geom_bar(stat = "identity") +
+  labs(x = "Years group",
+       y = "Reused networks") +
+  geom_col(fill = "black") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, vjust = 0.7)) +
+  scale_x_discrete(labels=c("2000-2005", "2006-2010", "2011-2015", "2016-2020")) +
+  geom_hline(yintercept = mean(years_groups_r$count), linetype = "dashed", size = 1)
+dev.off()
+
 
 ### networks number x taxonomic restriction (ANIMALS)
 #counting taxonomic level
