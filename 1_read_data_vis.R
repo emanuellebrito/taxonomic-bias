@@ -13,6 +13,7 @@ setwd("C:/Users/emanu/Dropbox (Personal)/Doutorado - Emanuelle/Cap 2 - Taxonomic
 
 webs <- read.csv("Scientiometric_Data_May_2023.csv",  sep=";", dec = ",")
 reuse <- read.csv("ReusedData_May_2023.csv",  sep=";", dec = ",")
+all_data <- read.csv("All_Data_May_2023.csv",  sep=";", dec = ",")
 summary(webs)
 
 ## ***********************************************
@@ -237,6 +238,20 @@ ggplot(my_data_augmented, aes(x = .fitted, y = .resid)) +
   ylab("Residuals") +
   ggtitle("GLM Residuals vs. Predicted Values")
 
+###ggeffects
+mydf <- ggpredict(ay_glm, terms = "Publi_Year")
+
+ggplot(mydf, aes(x, predicted)) +
+  geom_line() +
+  geom_ribbon(aes(ymin = conf.low, ymax = conf.high), alpha = 0.1)
+
+mydf <- ggpredict(ay_glm, terms = c("Publi_Year", "Animal_taxon_group"))
+
+ggplot(mydf, aes(x = x, y = predicted, colour = group)) +
+  geom_line() +
+  facet_wrap(~group)
+
+
 #plotting
 ggplot(animal_year, aes(x = Publi_Year, y = count, col = Animal_taxon_group)) +
   geom_point() +
@@ -289,16 +304,77 @@ combined_plot <- plot1 +
 combined_plot
 
 
+#############################
+#Sampling focus
+
+#data by sf
+focus.data <- webs %>%
+  group_by(Sampling_Focus)%>%
+  summarise(webs = n()) %>%
+  na.omit() %>%
+  mutate(pct = round(webs / sum(webs)*100, 3))
+
+#############################
+#Pollinators x Visitors
+
+#data by pollinate detection
+pollen.data <- webs %>%
+  group_by(Pollinator)%>%
+  summarise(webs = n()) %>%
+  na.omit() %>%
+  mutate(pct = round(webs / sum(webs)*100, 3)) %>%
+  arrange(desc(pct))
+
+pollen.yes <- webs %>%
+  group_by(Pollinator, Detect.pollinator)%>%
+  summarise(webs = n()) %>%
+  filter(Pollinator == "Yes") %>%
+  na.omit() %>%
+  mutate(pct = round(webs / sum(webs)*100, 2)) %>%
+  arrange(desc(pct))
+
+# Barplot
+ggplot(pollen.data, aes(x=Pollinator, y=webs)) + 
+  geom_bar(stat = "identity")
+
+# Barplot
+ggplot(pollen.yes, aes(x=Detect.pollinator, y=webs)) + 
+  geom_bar(stat = "identity")
 
 
+ggplot(pollen.yes, aes(fill=Detect.pollinator, x = "", y=webs)) + 
+  geom_col() +
+  geom_text(aes(label = paste0(pct, "%")), 
+            position = position_stack(vjust = 0.5))
 
 
+#############################
+#Taxonomic criteria
+
+#data by taxonomic criteria for animal and plants
+taxon.data <- webs %>%
+  select(Web_Code, Publi_Year, Publi_Decade, Plant_taxon_criterion., Plant_Taxonomic_level, 
+         Animal_taxon_criterion., Animal_Taxonomic_level)%>%
+  mutate(Both_taxon_criteria = 
+           case_when(Plant_taxon_criterion. == 'yes' & Animal_taxon_criterion. == 'yes' ~ 'Both',
+                    Plant_taxon_criterion. == 'no' & Animal_taxon_criterion. == 'no' ~ 'None',
+                    Plant_taxon_criterion. == 'yes' & Animal_taxon_criterion. == 'no' ~ 'Plant',
+                    Plant_taxon_criterion. == 'no' & Animal_taxon_criterion. == 'yes' ~ 'Animal'))  %>%
+  na.omit()
 
 
+# Plot the chart
+ggplot(taxon.data, aes(x=Both_taxon_criteria, y=Publi_Decade)) + 
+  geom_boxplot()
 
+#sum data
+taxon.data.sum <- taxon.data %>%
+  group_by(Both_taxon_criteria)%>%
+  summarise(taxon.data = n()) %>%
+  na.omit() %>%
+  mutate(pct = round(taxon.data / sum(taxon.data)*100, 3)) %>%
+  arrange(desc(pct))
 
-
-
-
-
+ggplot(taxon.data.sum, aes(x=Both_taxon_criteria, y=taxon.data)) + 
+  geom_bar(stat = "identity")
 
