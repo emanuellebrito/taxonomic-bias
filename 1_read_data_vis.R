@@ -5,6 +5,8 @@ library(maptools)
 library(dplyr)
 library(ggeffects)
 library(nlme)
+library(car)
+library(broom)
 
 #read data
 setwd("C:/Users/emanu/Dropbox (Personal)/Doutorado - Emanuelle/Cap 2 - Taxonomic bias/data")
@@ -221,16 +223,14 @@ animal_year <- webs %>%
   group_by(Publi_Year, Animal_taxon_group) %>% 
   summarize(count = n())
 
-#### test 
+#### test ORIGINAL NETWORKS ####
 #testing the assumptions
 ay_glm <- glm(count ~ Animal_taxon_group * Publi_Year, data = animal_year, family = poisson)
 plot(ay_glm)
 summary(ay_glm)
 
-library(car)
 vif(ay_glm)
 
-library(broom)
 my_data_augmented <- augment(ay_glm)
 ggplot(my_data_augmented, aes(x = .fitted, y = .resid)) + 
   geom_point() +
@@ -297,11 +297,65 @@ combined_plot <- plot1 +
   theme_minimal()+
   theme(legend.position = "none") +  # Remove legend from the first plot
   labs(x = "Year",
-       y = "Published networks") +
+       y = "Predict - Published networks") +
   facet_wrap(~ group, scales = "free_y")  # Create a separate facet for each group
 
 # Display the combined plot
+tiff('figure7.tif', w=1400, h=900, units="px", res=300, compression = "lzw")
 combined_plot
+dev.off()
+
+
+#plotting with ggeffects
+marginals <- tibble(elements = c("Publi_Year", "Animal_taxon_group"), fit = list(ay_glm)) %>%
+   mutate(marginal = purrr::map2(fit, elements, ggpredict)) %>%
+   select(-fit) %>%
+   unnest()
+
+pr <- ggpredict(ay_glm, c("Publi_Year", "Animal_taxon_group"))
+tiff('figure7.tif', w=1400, h=1100, units="px", res=300, compression = "lzw")
+ggplot(pr, aes(x=x, y=predicted, fill=group)) +
+  geom_line() +
+  geom_ribbon(aes(ymin = conf.low, ymax = conf.high), alpha = .25) +
+  theme_bw() +
+  facet_wrap(~group, scales = "free") +
+  theme(legend.position = "none")+
+  labs(x = "Year",
+       y = "Predict (Published networks)") 
+dev.off()
+
+
+####### anual study count fo the most published animal taxa in reused networks
+#grouping the 3 most published animal taxa
+animal_year_reused <- reuse %>%
+  drop_na(Animal_taxon) %>% 
+  mutate(Animal_taxon = case_when(
+    Animal_taxon %in% c("Insecta", "Animalia", "Trochilidae", "Apoidea") ~ Animal_taxon,
+    TRUE ~ "Other")) %>%
+  group_by(Reference_Year, Animal_taxon) %>% 
+  summarize(count = n())
+
+#### test REUSED NETWORKS ####
+#testing the assumptions
+ay_glm_reuse <- glm(count ~ Animal_taxon * Reference_Year, data = animal_year_reused, family = poisson)
+plot(ay_glm_reuse)
+summary(ay_glm_reuse)
+
+vif(ay_glm_reuse)
+
+#plotting with ggeffects
+p_reused <- ggpredict(ay_glm_reuse, c("Reference_Year", "Animal_taxon"))
+tiff('figure8.tif', w=1400, h=1100, units="px", res=300, compression = "lzw")
+ggplot(p_reused, aes(x=x, y=predicted, fill=group)) +
+  geom_line() +
+  geom_ribbon(aes(ymin = conf.low, ymax = conf.high), alpha = .25) +
+  theme_bw() +
+  facet_wrap(~group, scales = "free") +
+  theme(legend.position = "none")+
+  labs(x = "Year",
+       y = "Predict (Published networks)") 
+dev.off()
+
 
 
 #############################
