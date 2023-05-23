@@ -82,7 +82,7 @@ reuse_summary <- reuse %>%
 
 reuse_summary %>%
   ggplot(aes(x = Reference_Year, y = count)) +
-  geom_bar(stat = "identity", fill = "#0099f9") +
+  geom_bar(stat = "identity", fill = "black") +
   labs(x = "Year", y = "Reused networks")+
   theme_minimal() +
   geom_hline(yintercept = mean(reuse_summary$count), linetype = "dashed", size = 1)
@@ -131,7 +131,7 @@ taxa_groups_A %>%
   geom_bar(stat = "identity") +
   labs(x = "Animal Taxon",
        y = "Published networks") +
-  geom_col(fill = "#0099f9") +
+  geom_col(fill = "black") +
   theme_minimal()
 
 
@@ -157,7 +157,7 @@ taxa_groups_P %>%
   geom_bar(stat = "identity") +
   labs(x = "Plant Taxon",
        y = "Published networks number") +
-  geom_col(fill = "#0099f9") +
+  geom_col(fill = "black") +
   theme_minimal()
 
 
@@ -174,9 +174,9 @@ animal_groups <- webs %>%
   group_by(Animal_Taxonomic_level, Animal_taxon) %>% 
   summarize(count = length(Animal_taxon))
 
-filtered_data <- animal_groups %>% filter(count > 3)
+filtered_data <- animal_groups %>% filter(count > 2)
 
-# stacked barplot with multiple groups
+# stacked barplot with multiple groups ####ORIGINAL
 filtered_data %>%
   arrange(count) %>%
   mutate(Animal_Taxonomic_level = factor(Animal_Taxonomic_level, 
@@ -188,12 +188,53 @@ filtered_data %>%
        y = "Animal Taxonomic Level") +
   theme_minimal()
 
-#simple barplot only with animal taxa
+#simple barplot only with animal taxa #### ORIGINAL
+tiff('figure3a.tif', w=1100, h=1300, units="px", res=300, compression = "lzw")
 ggplot(data = filtered_data, aes(x = count, y = reorder(Animal_taxon, -count))) +
   geom_bar(stat = "identity") +
-  xlab("Published networks") +
+  xlab("Original plant-pollinator networks") +
   ylab("Animal Taxonomic Group") +
   theme_minimal()
+dev.off()
+#############################################################################
+### REUSED
+### networks number x animal taxa groups (ANIMALS) #REUSED
+reuse %>% 
+  drop_na(Animal_taxon) %>%
+  group_by(Animal_taxon) %>% 
+  summarize(count = length(Animal_taxon)) %>%
+  ggplot(aes(x = Animal_taxon, y = count)) +
+  geom_bar(stat = "identity") 
+
+animal_groups_reuse <- reuse %>%
+  drop_na(Animal_taxon) %>% 
+  group_by(Animal_Taxonomic_level, Animal_taxon) %>% 
+  summarize(count = length(Animal_taxon))
+
+animal_groups_reuse <- animal_groups_reuse[animal_groups_reuse$Animal_Taxonomic_level != "N/A", ]
+
+filtered_data_reuse <- animal_groups_reuse %>% filter(count > 2)
+
+# stacked barplot with multiple groups ####REUSED
+filtered_data_reuse %>%
+  arrange(count) %>%
+  mutate(Animal_Taxonomic_level = factor(Animal_Taxonomic_level, 
+                                         levels=c("NER", "phylum", "class", "order", "subfamily", 
+                                                  "superfamily", "family", "tribe", "genus"))) %>%
+  ggplot(aes(x = count, y = Animal_Taxonomic_level, fill = Animal_taxon)) +
+  geom_bar(stat = "identity") +
+  labs(x = "Reused networks",
+       y = "Animal Taxonomic Level") +
+  theme_minimal()
+
+#simple barplot only with animal taxa #### REUSED
+tiff('figure3b.tif', w=1100, h=1300, units="px", res=300, compression = "lzw")
+ggplot(data = filtered_data_reuse, aes(x = count, y = reorder(Animal_taxon, -count))) +
+  geom_bar(stat = "identity") +
+  xlab("Reused plant-pollinator networks") +
+  ylab("Animal Taxonomic Group") +
+  theme_minimal()
+dev.off()
 
 
 ### networks number x plant taxa groups (PLANTS)
@@ -217,15 +258,15 @@ filtered_data2 <- plant_groups %>% filter(count > 2)
 #grouping the 3 most published animal taxa
 animal_year <- webs %>%
   drop_na(Animal_taxon) %>% 
-  mutate(Animal_taxon_group = case_when(
-    Animal_taxon %in% c("Insecta", "Apoidea", "Trochilidae") ~ Animal_taxon,
+  mutate(Animal_taxon = case_when(
+    Animal_taxon %in% c("Insecta", "Apoidea", "Trochilidae", "Animalia") ~ Animal_taxon,
     TRUE ~ "Other")) %>%
-  group_by(Publi_Year, Animal_taxon_group) %>% 
+  group_by(Publi_Year, Animal_taxon) %>% 
   summarize(count = n())
 
 #### test ORIGINAL NETWORKS ####
 #testing the assumptions
-ay_glm <- glm(count ~ Animal_taxon_group * Publi_Year, data = animal_year, family = poisson)
+ay_glm <- glm(count ~ Animal_taxon * Publi_Year, data = animal_year, family = poisson)
 plot(ay_glm)
 summary(ay_glm)
 
@@ -245,7 +286,7 @@ ggplot(mydf, aes(x, predicted)) +
   geom_line() +
   geom_ribbon(aes(ymin = conf.low, ymax = conf.high), alpha = 0.1)
 
-mydf <- ggpredict(ay_glm, terms = c("Publi_Year", "Animal_taxon_group"))
+mydf <- ggpredict(ay_glm, terms = c("Publi_Year", "Animal_taxon"))
 
 ggplot(mydf, aes(x = x, y = predicted, colour = group)) +
   geom_line() +
@@ -253,18 +294,18 @@ ggplot(mydf, aes(x = x, y = predicted, colour = group)) +
 
 
 #plotting
-ggplot(animal_year, aes(x = Publi_Year, y = count, col = Animal_taxon_group)) +
+ggplot(animal_year, aes(x = Publi_Year, y = count, col = Animal_taxon)) +
   geom_point() +
-  stat_smooth(method = "glm", formula = count ~ Animal_taxon_group * Publi_Year, se = FALSE) +
-  facet_wrap(~ Animal_taxon_group)
+  stat_smooth(method = "glm", formula = count ~ Animal_taxon * Publi_Year, se = FALSE) +
+  facet_wrap(~ Animal_taxon)
 
-ggplot(animal_year, aes(x = Publi_Year, y = count, col = Animal_taxon_group)) +
+ggplot(animal_year, aes(x = Publi_Year, y = count, col = Animal_taxon)) +
   geom_point() +
-  geom_smooth(method = "glm", formula = count ~ Publi_Year + Animal_taxon_group, se = F)
+  geom_smooth(method = "glm", formula = count ~ Publi_Year + Animal_taxon, se = F)
 
 
 # Predict marginal effects for plotting
-pred <- ggpredict(ay_glm, terms = c("Publi_Year", "Animal_taxon_group"), type = "fe")
+pred <- ggpredict(ay_glm, terms = c("Publi_Year", "Animal_taxon"), type = "fe")
 ggplot(pred, aes(x = x, y = predicted, color = factor(group))) +
   geom_point() +
   geom_smooth() +
@@ -273,18 +314,18 @@ ggplot(pred, aes(x = x, y = predicted, color = factor(group))) +
 predlm <- predict(ay_glm, newdata = animal_year)
 animal_year$predlm <- predlm
 
-ggplot(animal_year, aes(x = Publi_Year, y = count, col = Animal_taxon_group)) +
+ggplot(animal_year, aes(x = Publi_Year, y = count, col = Animal_taxon)) +
   geom_point() +
   geom_line(aes(y = predlm), size = 1)
 
 # Plotting the real graph for each group
 # Create a new column in animal_year to match the animal taxon group with the predicted data
-animal_year$group <- factor(animal_year$Animal_taxon_group, levels = levels(pred$group))
+animal_year$group <- factor(animal_year$Animal_taxon, levels = levels(pred$group))
 
 # Original plot with points and facets
-plot1 <- ggplot(animal_year, aes(x = Publi_Year, y = count, col = Animal_taxon_group)) +
+plot1 <- ggplot(animal_year, aes(x = Publi_Year, y = count, col = Animal_taxon)) +
   geom_point() +
-  facet_wrap(~ Animal_taxon_group)
+  facet_wrap(~ Animal_taxon)
 
 # Second plot with predicted values and facets
 plot2 <- ggplot(pred, aes(x = x, y = predicted, color = factor(group))) +
@@ -307,12 +348,12 @@ dev.off()
 
 
 #plotting with ggeffects
-marginals <- tibble(elements = c("Publi_Year", "Animal_taxon_group"), fit = list(ay_glm)) %>%
-   mutate(marginal = purrr::map2(fit, elements, ggpredict)) %>%
-   select(-fit) %>%
-   unnest()
+#marginals <- tibble(elements = c("Publi_Year", "Animal_taxon"), fit = list(ay_glm)) %>%
+   #mutate(marginal = purrr::map2(fit, elements, ggpredict)) %>%
+   #select(-fit) %>%
+   #unnest()
 
-pr <- ggpredict(ay_glm, c("Publi_Year", "Animal_taxon_group"))
+pr <- ggpredict(ay_glm, c("Publi_Year", "Animal_taxon"))
 tiff('figure7.tif', w=1400, h=1100, units="px", res=300, compression = "lzw")
 ggplot(pr, aes(x=x, y=predicted, fill=group)) +
   geom_line() +
