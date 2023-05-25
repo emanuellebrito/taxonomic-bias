@@ -1,12 +1,16 @@
 library(igraph)
 library(bipartite)
 
-first <- read.csv("abreu&vieira_2004.csv",  sep=";", dec = ",")
+#set directory
+setwd("C:/Users/emanu/Dropbox (Personal)/Doutorado - Emanuelle/Cap 1 - Scientometric/data/pollination_webs")
 
-ppIg<-graph_from_incidence_matrix(first)
+#read data
+first_net <- read.csv("clements&long_1923.csv",  sep=";", dec = ",", row.names = 1)
+
+ppIg<-graph_from_incidence_matrix(first_net)
 ppIg
 
-ppIg<-graph_from_incidence_matrix(first, weighted = TRUE)
+ppIg<-graph_from_incidence_matrix(first_net, weighted = TRUE)
 ppIg
 
 V(ppIg)
@@ -38,10 +42,10 @@ plot(ppIg, vertex.color=vertex_attr(ppIg)$cor,vertex.label=NA,
      edge.width=(edge_attr(ppIg)$weight))
 
 
-tiff('first.tif', w=3000, h=3000, units="px", res=600, compression = "lzw")
+tiff('first_net.tif', w=3000, h=3000, units="px", res=600, compression = "lzw")
 l<-layout_with_dh(ppIg)
 plot(ppIg, vertex.color=vertex_attr(ppIg)$cor,vertex.label=NA,
-     vertex.size=2*igraph::degree(ppIg),
+     vertex.size=2*igraph::degree(ppIg)/4,
      edge.width=(edge_attr(ppIg)$weight)/5, 
      edge.color="grey50", 
      edge.curved=0.3,
