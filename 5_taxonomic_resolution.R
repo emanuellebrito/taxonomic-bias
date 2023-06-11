@@ -13,7 +13,7 @@ TAXON.RESOLUTION <- function(diretorio, ext) {
   for (i in 1:n) {
     matriz[[i]] <- read.csv(dados[i], header = TRUE, sep = ";", dec = ",")
     row_names[[i]] <- matriz[[i]][, 1]
-    names[[i]] <- str_remove(row_names[[i]], "\\s(sp\\S+)$")
+    names[[i]] <- str_remove(row_names[[i]], "\\s+sp(\\d+)?\\b", "")
     
     # Classify row names according to taxonomic levels
     taxonomic_levels <- case_when(
