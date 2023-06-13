@@ -13,16 +13,18 @@ TAXON.RESOLUTION <- function(diretorio, ext) {
   for (i in 1:n) {
     matriz[[i]] <- read.csv(dados[i], header = TRUE, sep = ";", dec = ",")
     row_names[[i]] <- matriz[[i]][, 1]
-    names[[i]] <- str_remove(row_names[[i]], "\\s+sp(\\d+)?\\b", "")
+    names[[i]] <- gsub("\\s+sp(\\d+)?\\b", "", row_names[[i]])
     
     # Classify row names according to taxonomic levels
     taxonomic_levels <- case_when(
-      str_detect(names[[i]], "Unidentified") ~ "Unidentified",
-      str_detect(names[[i]], "^era$") ~ "Order",
-      str_detect(names[[i]], "oidea$") ~ "Superfamily",
-      str_detect(names[[i]], "dae$") ~ "Family",
-      str_detect(names[[i]], "inae$") ~ "Subfamily",
-      str_detect(names[[i]], "ini$") ~ "Tribe",
+      str_detect(names[[i]], "^\\S+$") & str_detect(names[[i]], "Insecta$") ~ "Order",
+      str_detect(names[[i]], "^\\S+$") & str_detect(names[[i]], "Araneida$") ~ "Order",
+      str_detect(names[[i]], "^\\S+$") & str_detect(names[[i]], "Unidentified$") ~ "Unidentified",
+      str_detect(names[[i]], "^\\S+$") & str_detect(names[[i]], "ptera$") ~ "Order",
+      str_detect(names[[i]], "^\\S+$") & str_detect(names[[i]], "oidea$") ~ "Superfamily",
+      str_detect(names[[i]], "^\\S+$") & str_detect(names[[i]], "dae$") ~ "Family",
+      str_detect(names[[i]], "^\\S+$") & str_detect(names[[i]], "inae$") ~ "Subfamily",
+      str_detect(names[[i]], "^\\S+$") & str_detect(names[[i]], "ini$") ~ "Tribe",
       str_detect(names[[i]], "\\b\\S+\\s\\S+\\b") ~ "Species",
       TRUE ~ "Genus"
     )
@@ -49,4 +51,8 @@ TAXON.RESOLUTION <- function(diretorio, ext) {
 }
 
 # Usage example:
-subset <- TAXON.RESOLUTION(diretorio = "C:/Users/emanu/Dropbox (Personal)/Doutorado - Emanuelle/Cap 1 - Scientometric/data/subset" , ext = ".csv")  
+resolution <- TAXON.RESOLUTION(diretorio = "C:/Users/emanu/Dropbox (Personal)/Doutorado - Emanuelle/Cap 2 - Taxonomic bias/data/pollination_webs" , ext = ".csv")  
+write.csv(resolution, "webs_resolution.csv")
+
+# Proceed to check
+new_dataframe <- data.frame(names = names, taxonomic_levels = taxonomic_levels)
