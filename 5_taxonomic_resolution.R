@@ -1,3 +1,12 @@
+######################################################################
+# TAXONOMIC RESOLUTION OF NETWORKS DATA
+######################################################################
+# This script computes the taxonomic resolution of web data
+# by classifying row names according to taxonomic levels.
+# Creator: Emanuelle Brito
+######################################################################
+
+# Load necessary libraries
 library(stringr)
 library(dplyr)
 
@@ -54,5 +63,5 @@ TAXON.RESOLUTION <- function(diretorio, ext) {
 resolution <- TAXON.RESOLUTION(diretorio = "C:/Users/emanu/Dropbox (Personal)/Doutorado - Emanuelle/Cap 2 - Taxonomic bias/data/pollination_webs" , ext = ".csv")  
 write.csv(resolution, "webs_resolution.csv")
 
-# Proceed to check
+# Proceed to check/validation
 new_dataframe <- data.frame(names = names, taxonomic_levels = taxonomic_levels)
