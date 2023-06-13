@@ -1,4 +1,3 @@
-rm(list=ls())
 library(tidyverse)
 library(rgdal)
 library(maptools)
@@ -8,10 +7,10 @@ library(nlme)
 library(car)
 library(broom)
 
-#read data
+# Read data
 setwd("C:/Users/emanu/Dropbox (Personal)/Doutorado - Emanuelle/Cap 2 - Taxonomic bias/data")
 
-#setwd("taxonomic-bias")
+# Setwd("taxonomic-bias")
 
 webs <- read.csv("Scientiometric_Data_May_2023.csv",  sep=";", dec = ",")
 reuse <- read.csv("ReusedData_May_2023.csv",  sep=";", dec = ",")
