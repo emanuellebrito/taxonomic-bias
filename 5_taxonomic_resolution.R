@@ -1,6 +1,6 @@
 ######################################################################
 # TAXONOMIC RESOLUTION OF NETWORKS DATA
-######################################################################
+#---------------------------------------------------------------------
 # This script computes the taxonomic resolution of web data
 # by classifying row names according to taxonomic levels.
 # Creator: Emanuelle Brito
@@ -65,3 +65,44 @@ write.csv(resolution, "webs_resolution.csv")
 
 # Proceed to check/validation
 new_dataframe <- data.frame(names = names, taxonomic_levels = taxonomic_levels)
+
+######################################################################
+# TAXONOMIC REPRESENTATION BY GROUPS IN NETWORKS
+#---------------------------------------------------------------------
+
+TAXON.GROUPS <- function(diretorio, ext) {
+  setwd(diretorio)
+  dados <- list.files(diretorio, pattern = ext, full.names = TRUE)
+  n <- length(dados)
+  matriz <- vector("list", n)
+  row_names <- vector("list", n)
+  all_taxa <- c()
+  origin <- c()
+  
+  for (i in 1:n) {
+    matriz[[i]] <- read.csv(dados[i], header = TRUE, sep = ";", dec = ",")
+    row_names[[i]] <- matriz[[i]][, 1]
+    names <- gsub("\\s+sp(\\d+)?\\b", "", row_names[[i]])
+    
+    all_taxa <- c(all_taxa, sapply(strsplit(names, " "), "[", 1))
+    origin <- c(origin, rep(basename(dados[i]), length(names)))
+  }
+  
+  # Create a data frame with unique values and their frequencies
+  taxa <- data.frame(names = unique(all_taxa), stringsAsFactors = FALSE)
+  taxa$frequency <- table(all_taxa)[taxa$names]
+  
+  # Populate the origin column
+  origin_vector <- rep(NA, nrow(taxa))
+  for (i in 1:nrow(taxa)) {
+    origin_names <- origin[all_taxa %in% taxa$names[i]]
+    origin_vector[i] <- ifelse(length(origin_names) > 0, paste(unique(origin_names), collapse = ", "), NA)
+  }
+  taxa$origin <- origin_vector
+  
+  return(taxa)
+}
+
+webs_taxa <- TAXON.GROUPS(diretorio = "C:/Users/emanu/Dropbox (Personal)/Doutorado - Emanuelle/Cap 2 - Taxonomic bias/data/pollination_webs", ext = ".csv")
+
+write.csv(webs_taxa, "webs_taxa.csv")
