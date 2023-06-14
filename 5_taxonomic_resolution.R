@@ -106,3 +106,5 @@ TAXON.GROUPS <- function(diretorio, ext) {
 webs_taxa <- TAXON.GROUPS(diretorio = "C:/Users/emanu/Dropbox (Personal)/Doutorado - Emanuelle/Cap 2 - Taxonomic bias/data/pollination_webs", ext = ".csv")
 
 write.csv(webs_taxa, "webs_taxa.csv")
+
+save(webs_taxa, file = "webs_taxa.RData")
