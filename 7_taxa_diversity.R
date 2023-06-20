@@ -3,7 +3,7 @@ library(rgbif)
 library(vegan)
 library(dplyr)
 
-setwd("C:/Users/emanu/Dropbox (Personal)/Doutorado - Emanuelle/Cap 2 - Taxonomic bias/data/pollination_webs")
+setwd("D:/Dropbox (Personal)/Doutorado - Emanuelle/Cap 2 - Taxonomic bias/data/pollination_webs")
 
 # Reading dataset
 web <- read.csv("clements&long_1923.csv", header = TRUE, sep = ";", dec = ",")
