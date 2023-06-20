@@ -6,8 +6,11 @@ library(dplyr)
 setwd("D:/Dropbox (Personal)/Doutorado - Emanuelle/Cap 2 - Taxonomic bias/data/pollination_webs")
 
 # Reading dataset
-web <- read.csv("clements&long_1923.csv", header = TRUE, sep = ";", dec = ",")
+web <- read.csv("kato_et_al_1993.csv", header = TRUE, sep = ";", dec = ",")
+filtered_matrix <- web[!grepl("Unidentified", web[, 1]), ]
+web <- filtered_matrix
 row_names <- web[, 1]
+row_names <- row_names[!grepl("Unidentified", row_names)]
 #names <- gsub("\\s+sp(\\d+)?\\b", "", row_names)
 
 
@@ -91,9 +94,10 @@ tmat <- tmat[-1, ]
 tmat <- as.matrix(tmat)
 tmat <- apply(tmat, 2, as.numeric)
 
+
 # Set steps for taxonomic weights
-taxonomy.weights_p <- c(Base = 14.285, Genus = 14.285, Species = 14.285, Family = 14.285, Order = 14.285,
-                        Class = 14.285, Phylum = 14.285)
+taxonomy.weights_p <- c(Base = 10, Species = 15, Genus = 15, Family = 15, Order = 15,
+                        Class = 15, Phylum = 15)
 
 sum(taxonomy.weights_p)
 
