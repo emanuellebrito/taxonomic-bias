@@ -10,7 +10,7 @@ web <- read.csv("kato_et_al_1993.csv", header = TRUE, sep = ";", dec = ",")
 filtered_matrix <- web[!grepl("Unidentified", web[, 1]), ]
 web <- filtered_matrix
 row_names <- web[, 1]
-row_names <- row_names[!grepl("Unidentified", row_names)]
+#row_names <- row_names[!grepl("Unidentified", row_names)]
 #names <- gsub("\\s+sp(\\d+)?\\b", "", row_names)
 
 
